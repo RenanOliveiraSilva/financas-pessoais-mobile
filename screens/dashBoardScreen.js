@@ -13,36 +13,36 @@ export default function DashboardScreen() {
   const [resumo, setResumo] = useState({ receita: 0, despesa: 0 });
   const [anoSelecionado, setAnoSelecionado] = useState('2025');
 
+  const carregarDados = async () => {
+    try {
+      const res = await api.get(`/lancamentos/?ano=${anoSelecionado}&usuario=${user.id}`);
+      const lancamentos = res.data;
+
+      let receita = 0;
+      let despesa = 0;
+      const meses = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const receitaPorMes = Array(12).fill(0);
+      const despesaPorMes = Array(12).fill(0);
+
+      lancamentos.forEach(l => {
+        const mesIndex = l.mes - 1;
+        if (l.tipo === 'RECEITA') {
+          receitaPorMes[mesIndex] += l.valor;
+          receita += l.valor;
+        } else {
+          despesaPorMes[mesIndex] += l.valor;
+          despesa += l.valor;
+        }
+      });
+
+      setResumo({ receita, despesa });
+      setDadosMensais({ meses, receitaPorMes, despesaPorMes });
+    } catch (err) {
+      console.log('Erro ao carregar dados:', err);
+    }
+  };
+
   useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        const res = await api.get(`/lancamentos/?ano=${anoSelecionado}&usuario=${user.id}`);
-        const lancamentos = res.data;
-
-        let receita = 0;
-        let despesa = 0;
-        const meses = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const receitaPorMes = Array(12).fill(0);
-        const despesaPorMes = Array(12).fill(0);
-
-        lancamentos.forEach(l => {
-          const mesIndex = l.mes - 1;
-          if (l.tipo === 'RECEITA') {
-            receitaPorMes[mesIndex] += l.valor;
-            receita += l.valor;
-          } else {
-            despesaPorMes[mesIndex] += l.valor;
-            despesa += l.valor;
-          }
-        });
-
-        setResumo({ receita, despesa });
-        setDadosMensais({ meses, receitaPorMes, despesaPorMes });
-      } catch (err) {
-        console.log('Erro ao carregar dados:', err);
-      }
-    };
-
     carregarDados();
   }, [anoSelecionado]);
 
@@ -118,6 +118,10 @@ export default function DashboardScreen() {
       )}
 
       <Center my={4}>
+        <Button onPress={carregarDados} colorScheme="blue" mb={3}>
+          Atualizar Saldo
+        </Button>
+
         <Button colorScheme="red" onPress={logout}>
           Sair
         </Button>

@@ -1,23 +1,22 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
-import { Box, Text, VStack, HStack, Center, Button } from 'native-base';
+import { ScrollView, Dimensions } from 'react-native';
+import { Box, Text, VStack, HStack, Center, Button, Select, CheckIcon } from 'native-base';
 import { AuthContext } from '../contexts/AuthContext';
 import api from '../services/api';
 import { LineChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function DashboardScreen() {
-  const { user, logout} = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const [dadosMensais, setDadosMensais] = useState([]);
   const [resumo, setResumo] = useState({ receita: 0, despesa: 0 });
-  
+  const [anoSelecionado, setAnoSelecionado] = useState('2025');
 
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        const res = await api.get(`/lancamentos/?ano=2025&usuario=${user.id}`);
+        const res = await api.get(`/lancamentos/?ano=${anoSelecionado}&usuario=${user.id}`);
         const lancamentos = res.data;
 
         let receita = 0;
@@ -45,13 +44,30 @@ export default function DashboardScreen() {
     };
 
     carregarDados();
-  }, []);
+  }, [anoSelecionado]);
 
   return (
     <ScrollView>
       <Center py={4}>
         <Text fontSize="2xl" fontWeight="bold">Olá, {user.nome}</Text>
       </Center>
+
+      <VStack px={4} py={2}>
+        <Text mb={2}>Selecione o ano:</Text>
+        <Select
+          selectedValue={anoSelecionado}
+          minWidth="200"
+          accessibilityLabel="Escolha o ano"
+          placeholder="Escolha o ano"
+          _selectedItem={{ bg: "teal.600", endIcon: <CheckIcon size="5" /> }}
+          mt={1}
+          onValueChange={(itemValue) => setAnoSelecionado(itemValue)}
+        >
+          <Select.Item label="2023" value="2023" />
+          <Select.Item label="2024" value="2024" />
+          <Select.Item label="2025" value="2025" />
+        </Select>
+      </VStack>
 
       <HStack justifyContent="space-around" px={4} py={2}>
         <Box bg="green.100" p={4} rounded="2xl" w="45%">
@@ -100,9 +116,12 @@ export default function DashboardScreen() {
           />
         </Box>
       )}
-        <Button mt="4" colorScheme="red" onPress={logout}>
-        Sair
-      </Button>
+
+      <Center my={4}>
+        <Button colorScheme="red" onPress={logout}>
+          Sair
+        </Button>
+      </Center>
     </ScrollView>
   );
 }
